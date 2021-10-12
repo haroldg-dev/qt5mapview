@@ -11,17 +11,17 @@ Esta aplicacion nos va a permitir interpretar la información que nos envia el d
 
 ## Jetson Nano<br>
 
-![](resource/jetson-nano-dev-kit-B01.png)
+![](recursos/jetson-nano-dev-kit-B01.png)
 
 - NVIDIA® Jetson Nano™ Developer Kit es una pequeña computadora poderosa que nos permite correr multiples redes neuronales en paralelo, plataforma facil de usar que encience con 5 voltios.
 - Caracteristicas :
   - Jetson Nano Module<br>
-    ![](resource/nvidia-jetson-nano-module.jpg) - 128-core NVIDIA Maxwell™ GPU - Quad-core ARM® A57 CPU - 4 GB 64-bit LPDDR4 - 10/100/1000BASE-T Ethernet
+    ![](recursos/nvidia-jetson-nano-module.jpg) - 128-core NVIDIA Maxwell™ GPU - Quad-core ARM® A57 CPU - 4 GB 64-bit LPDDR4 - 10/100/1000BASE-T Ethernet
   - Opciones de encendido
     - Micro-USB 5V 2A
     - DC power adapter 5V 4A
   - I/O<br>
-    ![](resource/jetson-nano-b01.png)
+    ![](recursos/jetson-nano-b01.png)
     - USB 3.0 Type A - USB 2.0 Micro-B - HDMI/DisplayPort - M.2 Key E - Gigabit Ethernet - GPIOs, I2C, I2S, SPI, UART - 2xMIPI-CSI camera connector - Fan connector - PoE connector
 
 ## L4T OS (Linux For Tegra)
@@ -58,7 +58,7 @@ Esta aplicacion nos va a permitir interpretar la información que nos envia el d
 
 - NVIDIA JetPack SDK es la solucion mas completa para crear aplicaciones de inteligencia artificial. Todos los modulos y kits de desarrollo de Jetson son compatibles con JetPack SDK.
 - JetPack SDK incluye el ultimo driver empaquetado de Linux (L4T) con systema operativo Linux, librerias acelerada de CUDA-X y APIs para Deep Learning, Computer Vision, Accelerated Computing y Multimedia. <br>
-  ![](resource/jetpack.jpg)
+  ![](recursos/jetpack.jpg)
 - Latest release JetPack is version 4.5.
 - JetPack Caracteristicas :
   - **OS** : NVIDIA L4T (JetPack 4.5 includes L4T 32.5)
