@@ -153,13 +153,23 @@ Esta aplicacion nos va a permitir interpretar la información que nos envia el d
 
 # PyQt5
 
+- PyQt es un binding de la biblioteca gráfica Qt para el lenguaje de programación Python. La biblioteca está desarrollada por la firma británica Riverbank Computing y está disponible para Windows, GNU/Linux y Mac OS X bajo diferentes licencias. 
+
+- https://pypi.org/project/PyQt5/
+
 ---
 
 # PyQtWebEngine
 
+- Proporciona la capacidad de incrustar contenido web en aplicaciones.
+
+- https://pypi.org/project/PyQtWebEngine/
+
 ---
 
 # Folium
+
+- folium facilita la visualización de datos que se han manipulado en Python en un mapa de folleto interactivo. 
 
 - https://python-visualization.github.io/folium/
 
