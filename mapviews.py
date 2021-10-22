@@ -1,18 +1,29 @@
 # test data
 # -12.070972, -77.034917
 # -12.071115, -77.035363
-# -12.070247, -77.033177 
+# -12.070247, -77.033177
 # -12.069478, -77.034116
+# -12.075757833333334, -77.00004533333333
 from PyQt5.QtWidgets import QApplication, QDesktopWidget, QLabel, QWidget, QLineEdit, QTextBrowser, QPushButton, QVBoxLayout, QGraphicsPathItem
 from PyQt5 import QtGui
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
-from PyQt5.QtWebEngineWidgets import QWebEngineView # pip install PyQtWebEngine
+from PyQt5.QtWebEngineWidgets import QWebEngineView  # pip install PyQtWebEngine
 
 import csv
 import io
-import folium # pip install folium
+import folium  # pip install folium
 import sys
+import serial
+
+xbeeport = serial.Serial(
+    port="COM3",
+    baudrate=9600,
+    bytesize=serial.EIGHTBITS,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+)
+
 
 class MyApp(QWidget):
 
@@ -27,8 +38,8 @@ class MyApp(QWidget):
         # 1 element
         self.le = QLineEdit()
         self.le.returnPressed.connect(self.append_text)
-        
-        # 2 element 
+
+        # 2 element
         self.tb = QTextBrowser()
         self.tb.setAcceptRichText(True)
         self.tb.setOpenExternalLinks(True)
@@ -48,9 +59,9 @@ class MyApp(QWidget):
         # 6 element
         coordinate = (-12.070831, -77.033788)
         self.m = folium.Map(
-        	tiles='Stamen Terrain',
-        	zoom_start=17,
-        	location=coordinate
+            tiles='Stamen Terrain',
+            zoom_start=17,
+            location=coordinate
         )
 
         data = io.BytesIO()
@@ -73,7 +84,7 @@ class MyApp(QWidget):
         self.setGeometry(600, 700, 600, 700)
         self.center_app()
         self.show()
-    
+
     def center_app(self):
         """Inicializa la app en el centro de la pantalla"""
         qr = self.frameGeometry()
@@ -85,36 +96,37 @@ class MyApp(QWidget):
         """Agrega los datos en el visualizador de coordenadas"""
         text = self.le.text()
         self.tb.append(text)
-        
+
         # add marker
         self.update_map(text)
 
-        #delete info
+        # delete info
         self.le.clear()
 
     def clear_text(self):
         """Limpia el visualizador de coordenadas"""
         self.tb.clear()
 
-    def update_map(self,coordinate):
+    def update_map(self, coordinate):
         """Actualiza el mapa con los puntos del gps"""
         coordinate = coordinate.split(',')
-        first = float(coordinate[0])
-        second = float(coordinate[1])
-        coordinate = [first,second]
+        self.first = float(coordinate[0])
+        self.second = float(coordinate[1])
+        coordinate = [self.first, self.second]
         self.chosen_points.append(coordinate)
 
         self.vbox.removeWidget(self.webView)
 
-        coordinate = (-12.070831, -77.033788)
+        coordinate = (self.first, self.second)
         self.m = folium.Map(
-        	tiles='Stamen Terrain',
-        	zoom_start=17,
-        	location=coordinate
+            tiles='Stamen Terrain',
+            zoom_start=17,
+            location=coordinate
         )
 
         for coordinate in self.chosen_points:
-            self.m.add_child(folium.Marker(location = coordinate, icon = folium.Icon(color='red')))
+            self.m.add_child(folium.Marker(
+                location=coordinate, icon=folium.Icon(color='red')))
 
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -128,11 +140,11 @@ class MyApp(QWidget):
     def delete_marker_map(self):
         """Elimina todos los marcadores del mapa"""
         self.vbox.removeWidget(self.webView)
-        coordinate = (-12.070831, -77.033788)
+        coordinate = (self.first, self.second)
         self.m = folium.Map(
-        	tiles='Stamen Terrain',
-        	zoom_start=17,
-        	location=coordinate
+            tiles='Stamen Terrain',
+            zoom_start=17,
+            location=coordinate
         )
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -140,11 +152,11 @@ class MyApp(QWidget):
         self.webView = QWebEngineView()
         self.webView.setHtml(data.getvalue().decode())
         self.vbox.addWidget(self.webView, 5)
-    
+
     def save_all_data(self):
         """Guarda todos los valores del visualizador de data
         en un archivos csv"""
-        data_header = ['first','second']
+        data_header = ['first', 'second']
         data_body = []
 
         text = self.tb.toPlainText()
@@ -161,6 +173,7 @@ class MyApp(QWidget):
             writer = csv.DictWriter(f, fieldnames=data_header)
             writer.writeheader()
             writer.writerows(data_body)
+
 
 if __name__ == '__main__':
 
