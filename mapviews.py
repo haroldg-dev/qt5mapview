@@ -26,7 +26,6 @@ xbeeport = serial.Serial(
 
 
 class MyApp(QWidget):
-
     def __init__(self):
         super().__init__()
         self.chosen_points = []
@@ -45,24 +44,20 @@ class MyApp(QWidget):
         self.tb.setOpenExternalLinks(True)
 
         # 3 element
-        self.clear_btn = QPushButton('Clear')
+        self.clear_btn = QPushButton("Clear")
         self.clear_btn.pressed.connect(self.clear_text)
 
         # 4 element
-        self.save_data = QPushButton('Guardar Data')
+        self.save_data = QPushButton("Guardar Data")
         self.save_data.pressed.connect(self.save_all_data)
 
         # 5 element
-        self.delete_marker = QPushButton('Eliminar Marcadores')
+        self.delete_marker = QPushButton("Eliminar Marcadores")
         self.delete_marker.pressed.connect(self.delete_marker_map)
 
         # 6 element
         coordinate = (-12.070831, -77.033788)
-        self.m = folium.Map(
-            tiles='Stamen Terrain',
-            zoom_start=17,
-            location=coordinate
-        )
+        self.m = folium.Map(tiles="Stamen Terrain", zoom_start=17, location=coordinate)
 
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -80,7 +75,7 @@ class MyApp(QWidget):
         self.vbox.addWidget(self.webView, 5)
 
         self.setLayout(self.vbox)
-        self.setWindowTitle('Detector de Anomalias')
+        self.setWindowTitle("Detector de Anomalias")
         self.setGeometry(600, 700, 600, 700)
         self.center_app()
         self.show()
@@ -109,24 +104,30 @@ class MyApp(QWidget):
 
     def update_map(self, coordinate):
         """Actualiza el mapa con los puntos del gps"""
-        coordinate = coordinate.split(',')
+        coordinate = coordinate.split(",")
         self.first = float(coordinate[0])
         self.second = float(coordinate[1])
         coordinate = [self.first, self.second]
         self.chosen_points.append(coordinate)
+        punto_promedio_x = 0
+        punto_promedio_y = 0
+        numero_puntos = len(self.chosen_points)
+
+        # promedio de puntos leidos
+        for point in self.chosen_points:
+            punto_promedio_x += point[0]
+            punto_promedio_y += point[1]
+
+        punto_promedio_x = round(punto_promedio_x / numero_puntos, 6)
+        punto_promedio_y = round(punto_promedio_y / numero_puntos, 6)
 
         self.vbox.removeWidget(self.webView)
 
-        coordinate = (self.first, self.second)
-        self.m = folium.Map(
-            tiles='Stamen Terrain',
-            zoom_start=17,
-            location=coordinate
-        )
+        coordinate = (punto_promedio_x, punto_promedio_y)
+        self.m = folium.Map(tiles="Stamen Terrain", zoom_start=17, location=coordinate)
 
         for coordinate in self.chosen_points:
-            self.m.add_child(folium.Marker(
-                location=coordinate, icon=folium.Icon(color='red')))
+            self.m.add_child(folium.Marker(location=coordinate, icon=folium.Icon(color="red")))
 
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -137,15 +138,12 @@ class MyApp(QWidget):
 
         # self.vbox.update()
         # self.update()
+
     def delete_marker_map(self):
         """Elimina todos los marcadores del mapa"""
         self.vbox.removeWidget(self.webView)
         coordinate = (self.first, self.second)
-        self.m = folium.Map(
-            tiles='Stamen Terrain',
-            zoom_start=17,
-            location=coordinate
-        )
+        self.m = folium.Map(tiles="Stamen Terrain", zoom_start=17, location=coordinate)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
 
@@ -156,26 +154,26 @@ class MyApp(QWidget):
     def save_all_data(self):
         """Guarda todos los valores del visualizador de data
         en un archivos csv"""
-        data_header = ['first', 'second']
+        data_header = ["first", "second"]
         data_body = []
 
         text = self.tb.toPlainText()
-        text_list = text.split('\n')
+        text_list = text.split("\n")
 
         for line in text_list:
             line_data = {
-                'first': line.split(',')[0],
-                'second': line.split(',')[1],
+                "first": line.split(",")[0],
+                "second": line.split(",")[1],
             }
             data_body.append(line_data)
 
-        with open('gps.csv', 'w', encoding='utf-8') as f:
+        with open("gps.csv", "w", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=data_header)
             writer.writeheader()
             writer.writerows(data_body)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     ex = MyApp()
