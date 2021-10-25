@@ -4,39 +4,36 @@
 # -12.070247, -77.033177
 # -12.069478, -77.034116
 # -12.075757833333334, -77.00004533333333
-from PyQt5.QtWidgets import QApplication, QDesktopWidget, QLabel, QWidget, QLineEdit, QTextBrowser, QPushButton, QVBoxLayout, QGraphicsPathItem
-from PyQt5 import QtGui
-from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QDesktopWidget, QWidget, QComboBox, QTextBrowser, QPushButton, QVBoxLayout, QLabel, QStatusBar
 from PyQt5.QtWebEngineWidgets import QWebEngineView  # pip install PyQtWebEngine
-
+from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
+from PyQt5.QtCore import QIODevice, QTextStream
 import csv
 import io
 import folium  # pip install folium
 import sys
-import serial
-
-xbeeport = serial.Serial(
-    port="COM3",
-    baudrate=9600,
-    bytesize=serial.EIGHTBITS,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-)
 
 
 class MyApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.port = QSerialPort()
         self.chosen_points = []
         self.initUI()
 
     def initUI(self):
         """Se define los elementos de la interfaz grafica"""
-
+        self.data = []
+        self.straux = ""
         # 1 element
-        self.le = QLineEdit()
-        self.le.returnPressed.connect(self.append_text)
+        self.portNames = QComboBox(self)
+        self.portNames.addItems([port.portName()
+                                for port in QSerialPortInfo().availablePorts()])
+
+        self.portOpenButton = QPushButton('CONECTAR')
+        self.portOpenButton.setCheckable(True)
+        self.portOpenButton.clicked.connect(self.portOpen)
+        self.port.readyRead.connect(self.readFromPort)
 
         # 2 element
         self.tb = QTextBrowser()
@@ -57,7 +54,8 @@ class MyApp(QWidget):
 
         # 6 element
         coordinate = (-12.070831, -77.033788)
-        self.m = folium.Map(tiles="Stamen Terrain", zoom_start=17, location=coordinate)
+        self.m = folium.Map(tiles="Stamen Terrain",
+                            zoom_start=17, location=coordinate)
 
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -67,18 +65,50 @@ class MyApp(QWidget):
 
         # box
         self.vbox = QVBoxLayout()
-        self.vbox.addWidget(self.le, 0)
-        self.vbox.addWidget(self.tb, 1)
-        self.vbox.addWidget(self.clear_btn, 2)
-        self.vbox.addWidget(self.save_data, 3)
-        self.vbox.addWidget(self.delete_marker, 4)
-        self.vbox.addWidget(self.webView, 5)
+        self.vbox.addWidget(self.portNames, 0)
+        self.vbox.addWidget(self.portOpenButton, 1)
+        self.vbox.addWidget(self.tb, 2)
+        self.vbox.addWidget(self.clear_btn, 3)
+        self.vbox.addWidget(self.save_data, 4)
+        self.vbox.addWidget(self.delete_marker, 5)
+        self.vbox.addWidget(self.webView, 6)
 
         self.setLayout(self.vbox)
         self.setWindowTitle("Detector de Anomalias")
         self.setGeometry(600, 700, 600, 700)
         self.center_app()
         self.show()
+
+    def portOpen(self, flag):
+        if flag:
+            self.port.setBaudRate(9600)
+            self.port.setPortName("COM3")
+            self.port.setDataBits(8)
+            self.port.setParity(0)
+            r = self.port.open(QIODevice.ReadWrite)
+            if not r:
+                self.portOpenButton.setChecked(False)
+                print('Port Error')
+            else:
+                print('Port opened')
+        else:
+            self.port.close()
+            self.statusText.setText('Port closed')
+            self.toolBar.serialControlEnable(True)
+
+    def readFromPort(self):
+        char = self.port.readAll()
+        x = str(char, 'utf-8')
+        if x != "%" and x != ",":
+            self.straux = self.straux + x
+        elif x == ",":
+            self.data.append(self.straux)
+            self.straux = ""
+        elif x == "%":
+            self.data.append(self.straux)
+            self.straux = ""
+            print(self.data)
+            self.append_text()
 
     def center_app(self):
         """Inicializa la app en el centro de la pantalla"""
@@ -89,14 +119,14 @@ class MyApp(QWidget):
 
     def append_text(self):
         """Agrega los datos en el visualizador de coordenadas"""
-        text = self.le.text()
+        text = self.data[0]+","+self.data[1]
         self.tb.append(text)
 
         # add marker
         self.update_map(text)
 
         # delete info
-        self.le.clear()
+        self.data = []
 
     def clear_text(self):
         """Limpia el visualizador de coordenadas"""
@@ -124,10 +154,12 @@ class MyApp(QWidget):
         self.vbox.removeWidget(self.webView)
 
         coordinate = (punto_promedio_x, punto_promedio_y)
-        self.m = folium.Map(tiles="Stamen Terrain", zoom_start=17, location=coordinate)
+        self.m = folium.Map(tiles="Stamen Terrain",
+                            zoom_start=17, location=coordinate)
 
         for coordinate in self.chosen_points:
-            self.m.add_child(folium.Marker(location=coordinate, icon=folium.Icon(color="red")))
+            self.m.add_child(folium.Marker(
+                location=coordinate, icon=folium.Icon(color="red")))
 
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -143,7 +175,8 @@ class MyApp(QWidget):
         """Elimina todos los marcadores del mapa"""
         self.vbox.removeWidget(self.webView)
         coordinate = (self.first, self.second)
-        self.m = folium.Map(tiles="Stamen Terrain", zoom_start=17, location=coordinate)
+        self.m = folium.Map(tiles="Stamen Terrain",
+                            zoom_start=17, location=coordinate)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
 
