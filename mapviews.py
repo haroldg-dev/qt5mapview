@@ -8,10 +8,12 @@ from PyQt5.QtWidgets import QApplication, QDesktopWidget, QWidget, QComboBox, QT
 from PyQt5.QtWebEngineWidgets import QWebEngineView  # pip install PyQtWebEngine
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt5.QtCore import QIODevice, QTextStream
+from datetime import datetime
 import csv
 import io
 import folium  # pip install folium
 import sys
+import time
 
 
 class MyApp(QWidget):
@@ -25,6 +27,10 @@ class MyApp(QWidget):
         """Se define los elementos de la interfaz grafica"""
         self.data = []
         self.straux = ""
+        self.busy = 0
+        self.t1 = round(time.time()*1000)
+        self.t2 = None
+        self.start = 0
         # 1 element
         self.portNames = QComboBox(self)
         self.portNames.addItems([port.portName()
@@ -97,18 +103,36 @@ class MyApp(QWidget):
             self.toolBar.serialControlEnable(True)
 
     def readFromPort(self):
+        self.t2 = round(time.time()*1000)
+        diff = self.t2 - self.t1
         char = self.port.readAll()
         x = str(char, 'utf-8')
-        if x != "%" and x != ",":
-            self.straux = self.straux + x
-        elif x == ",":
-            self.data.append(self.straux)
-            self.straux = ""
-        elif x == "%":
-            self.data.append(self.straux)
-            self.straux = ""
-            print(self.data)
-            self.append_text()
+        if x == "$" and self.busy == 0:
+            self.start = 1
+            print("START")
+        if self.busy == 0 and self.start == 1:
+            if x != "%" and x != "," and x != "$":
+                self.straux = self.straux + x
+            elif x == ",":
+                self.data.append(self.straux)
+                self.straux = ""
+            elif x == "%":
+                self.data.append(self.straux)
+                self.straux = ""
+                self.start = 0
+                self.t1 = round(time.time()*1000)
+                a = self.filtrodata()
+                if a:
+                    print(self.data)
+                    self.append_text()
+                    self.busy = 1
+                else:
+                    self.busy = 0
+
+        elif self.busy == 1 and diff > 2000:
+            self.busy = 0
+            self.t1 = round(time.time()*1000)
+            pass
 
     def center_app(self):
         """Inicializa la app en el centro de la pantalla"""
@@ -119,6 +143,7 @@ class MyApp(QWidget):
 
     def append_text(self):
         """Agrega los datos en el visualizador de coordenadas"""
+
         text = self.data[0]+","+self.data[1]
         self.tb.append(text)
 
@@ -128,15 +153,24 @@ class MyApp(QWidget):
         # delete info
         self.data = []
 
+    def filtrodata(self):
+        try:
+            self.first = float(self.data[0])
+            self.second = float(self.data[1])
+            return True
+        except Exception as error:
+            print(error)
+            return False
+
     def clear_text(self):
         """Limpia el visualizador de coordenadas"""
         self.tb.clear()
 
     def update_map(self, coordinate):
         """Actualiza el mapa con los puntos del gps"""
-        coordinate = coordinate.split(",")
+        """ coordinate = coordinate.split(",")
         self.first = float(coordinate[0])
-        self.second = float(coordinate[1])
+        self.second = float(coordinate[1]) """
         coordinate = [self.first, self.second]
         self.chosen_points.append(coordinate)
         punto_promedio_x = 0
@@ -155,7 +189,7 @@ class MyApp(QWidget):
 
         coordinate = (punto_promedio_x, punto_promedio_y)
         self.m = folium.Map(tiles="Stamen Terrain",
-                            zoom_start=17, location=coordinate)
+                            zoom_start=18, location=coordinate)
 
         for coordinate in self.chosen_points:
             self.m.add_child(folium.Marker(
@@ -176,7 +210,7 @@ class MyApp(QWidget):
         self.vbox.removeWidget(self.webView)
         coordinate = (self.first, self.second)
         self.m = folium.Map(tiles="Stamen Terrain",
-                            zoom_start=17, location=coordinate)
+                            zoom_start=18, location=coordinate)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
 
