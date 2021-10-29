@@ -4,7 +4,7 @@
 # -12.070247, -77.033177
 # -12.069478, -77.034116
 # -12.075757833333334, -77.00004533333333
-from PyQt5.QtWidgets import QApplication, QDesktopWidget, QWidget, QComboBox, QTextBrowser, QPushButton, QVBoxLayout, QLabel, QStatusBar, QMessageBox
+from PyQt5.QtWidgets import QApplication, QDesktopWidget, QWidget, QComboBox, QTextBrowser, QPushButton, QVBoxLayout, QLabel, QStatusBar, QMessageBox, QFileDialog
 from PyQt5.QtWebEngineWidgets import QWebEngineView  # pip install PyQtWebEngine
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt5.QtCore import QIODevice, QTextStream
@@ -193,23 +193,24 @@ class MyApp(QWidget):
         text = self.tb.toPlainText()
         text_list = text.split("\n")
 
-        try:    
+        try:
+            path =  QFileDialog.getExistingDirectory(
+                self,
+                caption='Seleccionar un Directorio'
+            )
             for line in text_list:
                 line_data = {
                     "first": line.split(",")[0],
                     "second": line.split(",")[1],
                 }
                 data_body.append(line_data)
+            with open(f"{path}/gps.csv", "w", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=data_header)
+                writer.writeheader()
+                writer.writerows(data_body)
         except IndexError:
             QMessageBox.about(self, "Error", "No se encontro ningun dato")
             
-
-        with open("gps.csv", "w", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=data_header)
-            writer.writeheader()
-            writer.writerows(data_body)
-
-
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
